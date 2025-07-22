@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+
+{% block title %}Voter Search - PolitiQ Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h3 mb-1 text-gray-800">
+                <i class="bi bi-people text-primary"></i>
+                Voter Search
+            </h1>
+            <p class="text-muted mb-0">Search and filter voter data</p>
+        </div>
+    </div>
+</div>
+
+<!-- Search Form -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">
+            <i class="bi bi-search"></i>
+            Search Filters
+        </h5>
+    </div>
+    <div class="card-body">
+        <form id="searchForm">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label for="district" class="form-label">District</label>
+                    <select class="form-select" id="district" name="district_id">
+                        <option value="">All Districts</option>
+                        {% for district in districts %}
+                            <option value="{{ district.id }}">{{ district.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <label for="mandal" class="form-label">Mandal</label>
+                    <select class="form-select" id="mandal" name="mandal_id" disabled>
+                        <option value="">All Mandals</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <label for="village" class="form-label">Village</label>
+                    <select class="form-select" id="village" name="village_id" disabled>
+                        <option value="">All Villages</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <label for="booth" class="form-label">Booth</label>
+                    <select class="form-select" id="booth" name="booth_id" disabled>
+                        <option value="">All Booths</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label for="voter_id" class="form-label">Voter ID</label>
+                    <input type="text" class="form-control" id="voter_id" name="voter_id" placeholder="Search by Voter ID">
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <label for="name" class="form-label">Name</label>
+                    <input type="text" class="form-control" id="name" name="name" placeholder="Search by Name">
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <label for="house_number" class="form-label">House Number</label>
+                    <input type="text" class="form-control" id="house_number" name="house_number" placeholder="Search by House No.">
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">&nbsp;</label>
+                    <div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search me-2"></i>
+                            Search
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="clearForm()">
+                            <i class="bi bi-x-circle me-2"></i>
+                            Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Results Section -->
+<div class="card">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0">
+            <i class="bi bi-table"></i>
+            Search Results
+            <span id="resultsCount" class="badge bg-light text-dark ms-2">0</span>
+        </h5>
+    </div>
+    <div class="card-body">
+        <div id="loadingIndicator" class="text-center py-4" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 text-muted">Searching voters...</p>
+        </div>
+        
+        <div id="noResults" class="text-center py-5">
+            <i class="bi bi-search display-1 text-muted"></i>
+            <h4 class="text-muted mt-3">Start Your Search</h4>
+            <p class="text-muted">Use the filters above to search for voters.</p>
+        </div>
+        
+        <div id="results" style="display: none;">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Voter ID</th>
+                            <th>Name</th>
+                            <th>Age</th>
+                            <th>Gender</th>
+                            <th>House No.</th>
+                            <th>Location</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsTableBody">
+                    </tbody>
+                </table>
+            </div>
+            
+            <nav id="pagination" style="display: none;">
+                <ul class="pagination justify-content-center">
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const districtSelect = document.getElementById('district');
+    const mandalSelect = document.getElementById('mandal');
+    const villageSelect = document.getElementById('village');
+    const boothSelect = document.getElementById('booth');
+    const searchForm = document.getElementById('searchForm');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const noResults = document.getElementById('noResults');
+    const results = document.getElementById('results');
+    const resultsCount = document.getElementById('resultsCount');
+    const resultsTableBody = document.getElementById('resultsTableBody');
+
+    // District change handler
+    districtSelect.addEventListener('change', function() {
+        const districtId = this.value;
+        
+        // Reset dependent dropdowns
+        mandalSelect.innerHTML = '<option value="">All Mandals</option>';
+        villageSelect.innerHTML = '<option value="">All Villages</option>';
+        boothSelect.innerHTML = '<option value="">All Booths</option>';
+        mandalSelect.disabled = !districtId;
+        villageSelect.disabled = true;
+        boothSelect.disabled = true;
+        
+        if (districtId) {
+            fetch(`/api/districts/${districtId}/mandals`)
+                .then(response => response.json())
+                .then(mandals => {
+                    mandals.forEach(mandal => {
+                        const option = document.createElement('option');
+                        option.value = mandal.id;
+                        option.textContent = mandal.name;
+                        mandalSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching mandals:', error));
+        }
+    });
+
+    // Mandal change handler
+    mandalSelect.addEventListener('change', function() {
+        const mandalId = this.value;
+        
+        villageSelect.innerHTML = '<option value="">All Villages</option>';
+        boothSelect.innerHTML = '<option value="">All Booths</option>';
+        villageSelect.disabled = !mandalId;
+        boothSelect.disabled = true;
+        
+        if (mandalId) {
+            fetch(`/api/mandals/${mandalId}/villages`)
+                .then(response => response.json())
+                .then(villages => {
+                    villages.forEach(village => {
+                        const option = document.createElement('option');
+                        option.value = village.id;
+                        option.textContent = village.name;
+                        villageSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching villages:', error));
+        }
+    });
+
+    // Village change handler
+    villageSelect.addEventListener('change', function() {
+        const villageId = this.value;
+        
+        boothSelect.innerHTML = '<option value="">All Booths</option>';
+        boothSelect.disabled = !villageId;
+        
+        if (villageId) {
+            fetch(`/api/villages/${villageId}/booths`)
+                .then(response => response.json())
+                .then(booths => {
+                    booths.forEach(booth => {
+                        const option = document.createElement('option');
+                        option.value = booth.id;
+                        option.textContent = booth.name;
+                        boothSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching booths:', error));
+        }
+    });
+
+    // Search form handler
+    searchForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        performSearch();
+    });
+
+    function performSearch() {
+        const formData = new FormData(searchForm);
+        const params = new URLSearchParams();
+        
+        for (let [key, value] of formData.entries()) {
+            if (value.trim()) {
+                params.append(key, value);
+            }
+        }
+
+        // Show loading
+        loadingIndicator.style.display = 'block';
+        noResults.style.display = 'none';
+        results.style.display = 'none';
+
+        fetch(`/api/voters/search?${params.toString()}`)
+            .then(response => response.json())
+            .then(data => {
+                loadingIndicator.style.display = 'none';
+                
+                if (data.voters && data.voters.length > 0) {
+                    displayResults(data.voters, data.total);
+                } else {
+                    showNoResults();
+                }
+            })
+            .catch(error => {
+                console.error('Error searching voters:', error);
+                loadingIndicator.style.display = 'none';
+                showNoResults();
+            });
+    }
+
+    function displayResults(voters, total) {
+        resultsCount.textContent = total;
+        resultsTableBody.innerHTML = '';
+
+        voters.forEach(voter => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><code>${voter.voter_id}</code></td>
+                <td>${voter.name}</td>
+                <td>${voter.age || 'N/A'}</td>
+                <td>
+                    ${voter.gender === 'M' ? '<span class="badge bg-primary">Male</span>' : 
+                      voter.gender === 'F' ? '<span class="badge bg-warning">Female</span>' : 
+                      '<span class="badge bg-secondary">' + (voter.gender || 'N/A') + '</span>'}
+                </td>
+                <td><span class="badge bg-info">${voter.house_number}</span></td>
+                <td>
+                    <small class="text-muted">
+                        ${voter.district_name} → ${voter.mandal_name} → ${voter.village_name}
+                        <br>Booth: ${voter.booth_number}
+                    </small>
+                </td>
+            `;
+            resultsTableBody.appendChild(row);
+        });
+
+        results.style.display = 'block';
+    }
+
+    function showNoResults() {
+        noResults.innerHTML = `
+            <i class="bi bi-inbox display-1 text-muted"></i>
+            <h4 class="text-muted mt-3">No Results Found</h4>
+            <p class="text-muted">Try adjusting your search criteria.</p>
+        `;
+        noResults.style.display = 'block';
+        results.style.display = 'none';
+    }
+
+    window.clearForm = function() {
+        searchForm.reset();
+        mandalSelect.disabled = true;
+        villageSelect.disabled = true;
+        boothSelect.disabled = true;
+        noResults.innerHTML = `
+            <i class="bi bi-search display-1 text-muted"></i>
+            <h4 class="text-muted mt-3">Start Your Search</h4>
+            <p class="text-muted">Use the filters above to search for voters.</p>
+        `;
+        noResults.style.display = 'block';
+        results.style.display = 'none';
+        resultsCount.textContent = '0';
+    };
+});
+</script>
+{% endblock %}

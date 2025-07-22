@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}Booth Management - PolitiQ Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h3 mb-1 text-gray-800">
+                <i class="bi bi-building text-primary"></i>
+                Booth Management
+            </h1>
+            <p class="text-muted mb-0">Add new voting booths to villages</p>
+        </div>
+    </div>
+</div>
+
+<!-- Add Booth Form -->
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-plus-circle"></i>
+                    Add New Booth
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if error %}
+                    <div class="alert alert-danger" role="alert">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Error:</strong> {{ error }}
+                    </div>
+                {% endif %}
+
+                <form method="post" action="/booths/create" id="boothForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="district" class="form-label">District</label>
+                            <select class="form-select" id="district" name="district" required>
+                                <option value="">Select District</option>
+                                {% for district in districts %}
+                                    <option value="{{ district.id }}">{{ district.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="mandal" class="form-label">Mandal</label>
+                            <select class="form-select" id="mandal" name="mandal" required disabled>
+                                <option value="">Select Mandal</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="village" class="form-label">Village</label>
+                            <select class="form-select" id="village" name="village_id" required disabled>
+                                <option value="">Select Village</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="booth_number" class="form-label">Booth Number</label>
+                            <input type="text" class="form-control" id="booth_number" name="booth_number" required placeholder="e.g., 001, B-12">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="booth_name" class="form-label">Booth Name</label>
+                        <input type="text" class="form-control" id="booth_name" name="booth_name" required placeholder="e.g., Government High School, Community Hall">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success" id="submitBtn" disabled>
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Create Booth
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-info-circle"></i>
+                    Instructions
+                </h5>
+            </div>
+            <div class="card-body">
+                <h6 class="fw-bold">Step-by-Step:</h6>
+                <ol class="list-unstyled">
+                    <li><span class="badge bg-primary me-2">1</span> Select District</li>
+                    <li><span class="badge bg-primary me-2">2</span> Select Mandal</li>
+                    <li><span class="badge bg-primary me-2">3</span> Select Village</li>
+                    <li><span class="badge bg-primary me-2">4</span> Enter Booth Number</li>
+                    <li><span class="badge bg-primary me-2">5</span> Enter Booth Name</li>
+                    <li><span class="badge bg-primary me-2">6</span> Click Create</li>
+                </ol>
+                
+                <div class="alert alert-info mt-3">
+                    <small>
+                        <i class="bi bi-lightbulb me-1"></i>
+                        <strong>Tip:</strong> Make sure the hierarchy data is already imported before adding booths.
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-gear"></i>
+                    Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/hierarchy" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-diagram-3 me-2"></i>
+                        Import Hierarchy First
+                    </a>
+                    <a href="/voters" class="btn btn-outline-info btn-sm">
+                        <i class="bi bi-people me-2"></i>
+                        View Voters
+                    </a>
+                    <a href="/" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-2"></i>
+                        Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const districtSelect = document.getElementById('district');
+    const mandalSelect = document.getElementById('mandal');
+    const villageSelect = document.getElementById('village');
+    const submitBtn = document.getElementById('submitBtn');
+    const boothNumberInput = document.getElementById('booth_number');
+    const boothNameInput = document.getElementById('booth_name');
+
+    // Enable/disable submit button based on form completion
+    function checkFormCompletion() {
+        const isComplete = districtSelect.value && 
+                          mandalSelect.value && 
+                          villageSelect.value && 
+                          boothNumberInput.value.trim() && 
+                          boothNameInput.value.trim();
+        submitBtn.disabled = !isComplete;
+    }
+
+    // District change handler
+    districtSelect.addEventListener('change', function() {
+        const districtId = this.value;
+        
+        // Reset dependent dropdowns
+        mandalSelect.innerHTML = '<option value="">Select Mandal</option>';
+        villageSelect.innerHTML = '<option value="">Select Village</option>';
+        mandalSelect.disabled = !districtId;
+        villageSelect.disabled = true;
+        checkFormCompletion();
+        
+        if (districtId) {
+            fetch(`/api/districts/${districtId}/mandals`)
+                .then(response => response.json())
+                .then(mandals => {
+                    mandals.forEach(mandal => {
+                        const option = document.createElement('option');
+                        option.value = mandal.id;
+                        option.textContent = mandal.name;
+                        mandalSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching mandals:', error));
+        }
+    });
+
+    // Mandal change handler
+    mandalSelect.addEventListener('change', function() {
+        const mandalId = this.value;
+        
+        // Reset village dropdown
+        villageSelect.innerHTML = '<option value="">Select Village</option>';
+        villageSelect.disabled = !mandalId;
+        checkFormCompletion();
+        
+        if (mandalId) {
+            fetch(`/api/mandals/${mandalId}/villages`)
+                .then(response => response.json())
+                .then(villages => {
+                    villages.forEach(village => {
+                        const option = document.createElement('option');
+                        option.value = village.id;
+                        option.textContent = village.name;
+                        villageSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching villages:', error));
+        }
+    });
+
+    // Add event listeners for form completion check
+    villageSelect.addEventListener('change', checkFormCompletion);
+    boothNumberInput.addEventListener('input', checkFormCompletion);
+    boothNameInput.addEventListener('input', checkFormCompletion);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,25 @@
+
+    Booth No: 001
+    Booth Name: Government High School, Karkhana
+    
+    House No: 12-A
+    1. Ramesh Kumar    35    M    ABC1234567
+    2. Sunita Devi     32    F    ABC2345678
+    3. Rahul Kumar     18    M    ABC3456789
+    
+    House No: 13-B
+    1. Mukesh Sharma   45    M    DEF1234567
+    2. Priya Sharma    42    F    DEF2345678
+    3. Arjun Sharma    20    M    DEF3456789
+    4. Kavya Sharma    16    F    DEF4567890
+    
+    House No: 14
+    1. Suresh Reddy    55    M    GHI1234567
+    2. Lakshmi Reddy   52    F    GHI2345678
+    3. Venkat Reddy    28    M    GHI3456789
+    
+    House No: 15-A
+    1. Ahmed Khan      38    M    JKL1234567
+    2. Fatima Khan     35    F    JKL2345678
+    3. Salman Khan     12    M    JKL3456789
+    
