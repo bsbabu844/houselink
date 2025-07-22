@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Logs - PolitiQ Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h3 mb-1 text-gray-800">
+                <i class="bi bi-cloud-upload text-primary"></i>
+                Upload Logs
+            </h1>
+            <p class="text-muted mb-0">View PDF upload and processing history</p>
+        </div>
+        <div>
+            <a href="/" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Logs Table -->
+<div class="card">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0">
+            <i class="bi bi-list"></i>
+            Processing History
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if logs %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Filename</th>
+                            <th>Booth</th>
+                            <th>Location</th>
+                            <th>Status</th>
+                            <th>Statistics</th>
+                            <th>Upload Date</th>
+                            <th>Error Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td>
+                                <div class="fw-bold">{{ log.filename }}</div>
+                                <small class="text-muted">ID: {{ log.id }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary">
+                                    {{ log.booth.booth_number }} - {{ log.booth.booth_name }}
+                                </span>
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    {{ log.booth.village.mandal.district.name }}<br>
+                                    → {{ log.booth.village.mandal.name }}<br>
+                                    → {{ log.booth.village.name }}
+                                </small>
+                            </td>
+                            <td>
+                                {% if log.status == 'completed' %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle me-1"></i>
+                                        Completed
+                                    </span>
+                                {% elif log.status == 'failed' %}
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-x-circle me-1"></i>
+                                        Failed
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-warning">
+                                        <i class="bi bi-clock me-1"></i>
+                                        {{ log.status|title }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if log.status == 'completed' %}
+                                    <div class="small">
+                                        <div><strong>{{ log.total_voters }}</strong> voters</div>
+                                        <div><strong>{{ log.total_houses }}</strong> houses</div>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="small">
+                                    <div>{{ log.created_at.strftime('%Y-%m-%d') }}</div>
+                                    <div class="text-muted">{{ log.created_at.strftime('%H:%M:%S') }}</div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if log.error_message %}
+                                    <button class="btn btn-sm btn-outline-danger" type="button" data-bs-toggle="collapse" data-bs-target="#error-{{ log.id }}" aria-expanded="false">
+                                        <i class="bi bi-exclamation-triangle"></i> View Error
+                                    </button>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if log.error_message %}
+                        <tr class="collapse" id="error-{{ log.id }}">
+                            <td colspan="7">
+                                <div class="alert alert-danger mb-0">
+                                    <h6 class="alert-heading">Error Details:</h6>
+                                    <p class="mb-0"><code>{{ log.error_message }}</code></p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox display-1 text-muted"></i>
+                <h4 class="text-muted mt-3">No Upload Logs</h4>
+                <p class="text-muted">No files have been uploaded yet.</p>
+                <a href="/booths" class="btn btn-primary">
+                    <i class="bi bi-upload me-2"></i>
+                    Upload First File
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Summary Statistics -->
+{% if logs %}
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card stat-card success h-100">
+            <div class="card-body text-center">
+                <h4 class="text-white">{{ logs|selectattr("status", "equalto", "completed")|list|length }}</h4>
+                <p class="text-white-50 mb-0">Successful Uploads</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card danger h-100">
+            <div class="card-body text-center">
+                <h4 class="text-white">{{ logs|selectattr("status", "equalto", "failed")|list|length }}</h4>
+                <p class="text-white-50 mb-0">Failed Uploads</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card primary h-100">
+            <div class="card-body text-center">
+                <h4 class="text-white">{{ logs|sum(attribute="total_voters") }}</h4>
+                <p class="text-white-50 mb-0">Total Voters Processed</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card info h-100">
+            <div class="card-body text-center">
+                <h4 class="text-white">{{ logs|sum(attribute="total_houses") }}</h4>
+                <p class="text-white-50 mb-0">Total Houses Processed</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

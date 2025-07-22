@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Hierarchy Management - PolitiQ Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h3 mb-1 text-gray-800">
+                <i class="bi bi-diagram-3 text-primary"></i>
+                Hierarchy Management
+            </h1>
+            <p class="text-muted mb-0">Import Telangana administrative hierarchy from Excel</p>
+        </div>
+    </div>
+</div>
+
+<!-- Import Form -->
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-upload"></i>
+                    Import Hierarchy Data
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if error %}
+                    <div class="alert alert-danger" role="alert">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Error:</strong> {{ error }}
+                    </div>
+                {% endif %}
+
+                {% if success %}
+                    <div class="alert alert-success" role="alert">
+                        <i class="bi bi-check-circle me-2"></i>
+                        <strong>Success:</strong> {{ message }}
+                    </div>
+                    
+                    {% if stats %}
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <h6 class="text-success">Created:</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="bi bi-plus-circle text-success"></i> Districts: {{ stats.districts_created }}</li>
+                                    <li><i class="bi bi-plus-circle text-success"></i> Mandals: {{ stats.mandals_created }}</li>
+                                    <li><i class="bi bi-plus-circle text-success"></i> Villages: {{ stats.villages_created }}</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-info">Skipped (Already Exist):</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="bi bi-skip-forward text-info"></i> Districts: {{ stats.districts_skipped }}</li>
+                                    <li><i class="bi bi-skip-forward text-info"></i> Mandals: {{ stats.mandals_skipped }}</li>
+                                    <li><i class="bi bi-skip-forward text-info"></i> Villages: {{ stats.villages_skipped }}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <form method="post" enctype="multipart/form-data" action="/hierarchy/import">
+                        <div class="mb-3">
+                            <label for="file" class="form-label">Excel File</label>
+                            <input type="file" class="form-control" id="file" name="file" accept=".xlsx,.xls" required>
+                            <div class="form-text">
+                                Upload an Excel file (.xlsx or .xls) containing District, Mandal, and Village columns.
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-upload me-2"></i>
+                            Import Hierarchy
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-info-circle"></i>
+                    File Format Requirements
+                </h5>
+            </div>
+            <div class="card-body">
+                <h6 class="fw-bold">Required Columns:</h6>
+                <ul class="list-unstyled">
+                    <li><i class="bi bi-check text-success"></i> <code>District</code></li>
+                    <li><i class="bi bi-check text-success"></i> <code>Mandal</code></li>
+                    <li><i class="bi bi-check text-success"></i> <code>Village</code></li>
+                </ul>
+                
+                <h6 class="fw-bold mt-3">Sample Data:</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>District</th>
+                                <th>Mandal</th>
+                                <th>Village</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Hyderabad</td>
+                                <td>Secunderabad</td>
+                                <td>Karkhana</td>
+                            </tr>
+                            <tr>
+                                <td>Hyderabad</td>
+                                <td>Secunderabad</td>
+                                <td>Marredpally</td>
+                            </tr>
+                            <tr>
+                                <td>Warangal</td>
+                                <td>Hanamkonda</td>
+                                <td>Kazipet</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="alert alert-warning mt-3">
+                    <small>
+                        <i class="bi bi-exclamation-triangle me-1"></i>
+                        <strong>Note:</strong> Duplicate entries will be skipped. The system will create the hierarchy: District → Mandal → Village.
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-gear"></i>
+                    Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/api/districts" class="btn btn-outline-primary btn-sm" target="_blank">
+                        <i class="bi bi-eye me-2"></i>
+                        View Districts API
+                    </a>
+                    <a href="/api/stats" class="btn btn-outline-info btn-sm" target="_blank">
+                        <i class="bi bi-bar-chart me-2"></i>
+                        View Statistics API
+                    </a>
+                    <a href="/" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-2"></i>
+                        Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

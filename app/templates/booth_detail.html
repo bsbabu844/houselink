@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}Booth {{ booth.booth_number }} - PolitiQ Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h3 mb-1 text-gray-800">
+                <i class="bi bi-building text-primary"></i>
+                Booth {{ booth.booth_number }}
+            </h1>
+            <p class="text-muted mb-0">{{ booth.booth_name }}</p>
+            <small class="text-muted">
+                {{ booth.village.mandal.district.name }} → {{ booth.village.mandal.name }} → {{ booth.village.name }}
+            </small>
+        </div>
+        <div>
+            <a href="/booths" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>
+                Back to Booths
+            </a>
+        </div>
+    </div>
+</div>
+
+{% if request.args.get('upload_result') == 'true' %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>
+        <strong>Success!</strong> Voter PDF uploaded and processed successfully.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+{% elif request.args.get('error') %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <strong>Error:</strong> {{ request.args.get('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+{% endif %}
+
+<div class="row">
+    <!-- Upload Section -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="bi bi-cloud-upload"></i>
+                    Upload Voter PDF
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" action="/booths/{{ booth.id }}/upload">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Voter List PDF</label>
+                        <input type="file" class="form-control" id="file" name="file" accept=".pdf" required>
+                        <div class="form-text">
+                            Upload voter list PDF from CEO Telangana portal
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-cloud-upload me-2"></i>
+                        Upload & Process
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-info-circle"></i>
+                    Booth Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <td class="fw-bold">Booth Number:</td>
+                        <td>{{ booth.booth_number }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Booth Name:</td>
+                        <td>{{ booth.booth_name }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Village:</td>
+                        <td>{{ booth.village.name }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Mandal:</td>
+                        <td>{{ booth.village.mandal.name }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">District:</td>
+                        <td>{{ booth.village.mandal.district.name }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Created:</td>
+                        <td>{{ booth.created_at.strftime('%Y-%m-%d') }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Voter Data Section -->
+    <div class="col-md-8">
+        {% if summary and summary.houses %}
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-people"></i>
+                        Voter Data Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="stat-card info h-100">
+                                <div class="card-body text-center">
+                                    <h4 class="text-white">{{ summary.total_houses }}</h4>
+                                    <p class="text-white-50 mb-0">Total Houses</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="stat-card success h-100">
+                                <div class="card-body text-center">
+                                    <h4 class="text-white">{{ summary.total_voters }}</h4>
+                                    <p class="text-white-50 mb-0">Total Voters</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>House No.</th>
+                                    <th>Voters</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for house in summary.houses %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-primary">{{ house.house_number }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ house.total_voters }} voters</span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#house-{{ loop.index }}" aria-expanded="false">
+                                            <i class="bi bi-eye"></i> View Details
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="collapse" id="house-{{ loop.index }}">
+                                    <td colspan="3">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Name</th>
+                                                        <th>Age</th>
+                                                        <th>Gender</th>
+                                                        <th>Voter ID</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for voter in house.voters %}
+                                                    <tr>
+                                                        <td>{{ voter.name }}</td>
+                                                        <td>{{ voter.age if voter.age else 'N/A' }}</td>
+                                                        <td>
+                                                            {% if voter.gender == 'M' %}
+                                                                <span class="badge bg-primary">Male</span>
+                                                            {% elif voter.gender == 'F' %}
+                                                                <span class="badge bg-warning">Female</span>
+                                                            {% else %}
+                                                                <span class="badge bg-secondary">{{ voter.gender if voter.gender else 'N/A' }}</span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td><code>{{ voter.voter_id }}</code></td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-inbox display-1 text-muted"></i>
+                    <h4 class="text-muted mt-3">No Voter Data</h4>
+                    <p class="text-muted">Upload a voter list PDF to get started.</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

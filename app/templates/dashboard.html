@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - PolitiQ Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h3 mb-1 text-gray-800">
+                <i class="bi bi-house-door text-primary"></i>
+                Dashboard
+            </h1>
+            <p class="text-muted mb-0">PolitiQ Phase I - House-Level Voter Mapping Tool</p>
+        </div>
+        <div>
+            <span class="badge bg-primary px-3 py-2">
+                <i class="bi bi-calendar3 me-1"></i>
+                Today
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card stat-card primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-white-50 small">Districts</div>
+                        <div class="h4 text-white">{{ stats.districts }}</div>
+                    </div>
+                    <div class="fa-2x text-white-50">
+                        <i class="bi bi-map"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card stat-card success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-white-50 small">Mandals</div>
+                        <div class="h4 text-white">{{ stats.mandals }}</div>
+                    </div>
+                    <div class="fa-2x text-white-50">
+                        <i class="bi bi-geo-alt"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card stat-card info h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-white-50 small">Villages</div>
+                        <div class="h4 text-white">{{ stats.villages }}</div>
+                    </div>
+                    <div class="fa-2x text-white-50">
+                        <i class="bi bi-house"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card stat-card warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-white-50 small">Booths</div>
+                        <div class="h4 text-white">{{ stats.booths }}</div>
+                    </div>
+                    <div class="fa-2x text-white-50">
+                        <i class="bi bi-building"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card stat-card danger h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-white-50 small">Houses</div>
+                        <div class="h4 text-white">{{ stats.houses }}</div>
+                    </div>
+                    <div class="fa-2x text-white-50">
+                        <i class="bi bi-house-door"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-white-50 small">Voters</div>
+                        <div class="h4 text-white">{{ stats.voters }}</div>
+                    </div>
+                    <div class="fa-2x text-white-50">
+                        <i class="bi bi-people"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-lightning"></i>
+                    Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/hierarchy" class="btn btn-outline-primary">
+                        <i class="bi bi-diagram-3 me-2"></i>
+                        Import Hierarchy Data
+                    </a>
+                    <a href="/booths" class="btn btn-outline-success">
+                        <i class="bi bi-building me-2"></i>
+                        Add New Booth
+                    </a>
+                    <a href="/voters" class="btn btn-outline-info">
+                        <i class="bi bi-people me-2"></i>
+                        Search Voters
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-cloud-upload"></i>
+                    Recent Uploads
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_uploads %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <tbody>
+                                {% for upload in recent_uploads %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">{{ upload.filename }}</div>
+                                        <small class="text-muted">{{ upload.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                    </td>
+                                    <td class="text-end">
+                                        {% if upload.status == 'completed' %}
+                                            <span class="badge bg-success">{{ upload.status }}</span>
+                                        {% elif upload.status == 'failed' %}
+                                            <span class="badge bg-danger">{{ upload.status }}</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">{{ upload.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center">
+                        <a href="/upload-logs" class="btn btn-sm btn-outline-secondary">View All Logs</a>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted">
+                        <i class="bi bi-inbox display-1"></i>
+                        <p>No recent uploads</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Overview -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-info-circle"></i>
+                    System Overview
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6 class="fw-bold text-primary">Data Hierarchy</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-arrow-right text-primary"></i> State: Telangana</li>
+                            <li><i class="bi bi-arrow-right text-primary"></i> Districts → Mandals → Villages</li>
+                            <li><i class="bi bi-arrow-right text-primary"></i> Villages → Booths → Houses → Voters</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="fw-bold text-success">Features Available</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success"></i> Excel hierarchy import</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Manual booth creation</li>
+                            <li><i class="bi bi-check-circle text-success"></i> PDF voter data extraction</li>
+                            <li><i class="bi bi-check-circle text-success"></i> House-wise voter grouping</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="fw-bold text-warning">Next Steps</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-clock text-warning"></i> Upload Telangana hierarchy Excel</li>
+                            <li><i class="bi bi-clock text-warning"></i> Add booth information</li>
+                            <li><i class="bi bi-clock text-warning"></i> Upload voter PDFs</li>
+                            <li><i class="bi bi-clock text-warning"></i> Review voter data</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
